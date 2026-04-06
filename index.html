@@ -1,228 +1,162 @@
-﻿import React, { useState, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Shuffle, RotateCcw, GraduationCap, Upload, User, CheckCircle2 } from 'lucide-react';
-
-
-const App = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [imageMap, setImageMap] = useState({}); // 儲存照片的 Blob URL
-  const fileInputRef = useRef(null);
-
-
-  const [students, setStudents] = useState([
-    {
-      id: '保414022',
-      name: '邱家博',
-      traits: '態度端正、戴眼鏡、短髮',
-      color: 'border-blue-500',
-      bgColor: 'bg-blue-500'
-    },
-    {
-      id: '保414023',
-      name: '陳奕睿',
-      img: '陳奕睿.jpg',
-      traits: '活潑開朗、拍照比YA、短髮',
-      color: 'border-indigo-500',
-      bgColor: 'bg-indigo-500'
-    },
-    {
-      id: '保414001',
-      name: '郭紓岑',
-      traits: '笑容燦爛、拍照比YA、長髮綁起',
-      color: 'border-rose-500',
-      bgColor: 'bg-rose-500'
-    }
-  ]);
-
-
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setImageMap(prev => ({
-        ...prev,
-        [students[currentIndex].id]: imageUrl
-      }));
-    }
-  };
-
-
-  const nextCard = () => {
-    setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % students.length);
-    }, 150);
-  };
-
-
-  const prevCard = () => {
-    setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev - 1 + students.length) % students.length);
-    }, 150);
-  };
-
-
-  const shuffleCards = () => {
-    setIsFlipped(false);
-    setTimeout(() => {
-      const shuffled = [...students].sort(() => Math.random() - 0.5);
-      setStudents(shuffled);
-      setCurrentIndex(0);
-    }, 150);
-  };
-
-
-  const currentStudent = students[currentIndex];
-  const currentImage = imageMap[currentStudent.id];
-
-
-  return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8 flex flex-col items-center font-sans text-slate-800">
-      {/* Header */}
-      <div className="w-full max-w-md mb-6 text-center">
-        <div className="flex items-center justify-center gap-2 mb-1 text-indigo-600">
-          <GraduationCap size={28} />
-          <h1 className="text-xl font-bold tracking-tight">學生姓名記憶訓練</h1>
-        </div>
-        <p className="text-slate-500 text-xs">內埔農工 · 郭政郎主任專用</p>
-      </div>
-
-
-      {/* Progress Bar */}
-      <div className="w-full max-w-md mb-6 px-2">
-        <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-widest">
-          <span>進度記錄</span>
-          <span>{currentIndex + 1} / {students.length}</span>
-        </div>
-        <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-indigo-500 transition-all duration-500" 
-            style={{ width: `${((currentIndex + 1) / students.length) * 100}%` }}
-          />
-        </div>
-      </div>
-
-
-      {/* Hidden File Input */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleImageUpload} 
-        accept="image/*" 
-        className="hidden" 
-      />
-
-
-      {/* Flashcard Container */}
-      <div className="relative w-full max-w-md aspect-[3/4] perspective-1000">
-        <div 
-          className={`relative w-full h-full transition-transform duration-500 transform-style-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
-          onClick={(e) => {
-            // 如果點擊的是上傳按鈕，不要翻轉
-            if (e.target.closest('.upload-btn')) return;
-            setIsFlipped(!isFlipped);
-          }}
-        >
-          {/* Front: Image Card */}
-          <div className="absolute inset-0 backface-hidden bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border-8 border-white flex flex-col">
-            <div className="relative flex-grow bg-slate-50 flex items-center justify-center group/img overflow-hidden">
-              {currentImage ? (
-                <img 
-                  src={currentImage} 
-                  alt="Student" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="flex flex-col items-center text-slate-300">
-                  <User size={80} strokeWidth={1} />
-                  <p className="mt-4 text-sm font-medium">請點擊右下角按鈕上傳照片</p>
-                </div>
-              )}
-              
-              {/* Upload Action Button */}
-              <button 
-                onClick={() => fileInputRef.current.click()}
-                className="upload-btn absolute bottom-4 right-4 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-all active:scale-90 z-10"
-                title="更換此學生的照片"
-              >
-                <Upload size={20} />
-              </button>
-            </div>
-            <div className="py-4 text-center bg-white border-t border-slate-50">
-              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">點擊卡片翻轉</span>
-            </div>
-          </div>
-
-
-          {/* Back: Name & Info */}
-          <div className="absolute inset-0 backface-hidden bg-slate-900 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center p-8 text-center rotate-y-180 border-8 border-slate-800">
-            <div className={`w-20 h-20 rounded-2xl ${currentStudent.bgColor} mb-6 flex items-center justify-center shadow-2xl`}>
-              <CheckCircle2 size={40} className="text-white" />
-            </div>
-            <h2 className="text-4xl font-bold text-white mb-2">{currentStudent.name}</h2>
-            <p className="text-indigo-400 font-mono text-lg mb-8">{currentStudent.id}</p>
-            
-            <div className="w-full h-px bg-white/10 mb-8" />
-            
-            <div className="space-y-3">
-              <p className="text-slate-500 text-[10px] uppercase tracking-[0.3em] font-black">Memory Point</p>
-              <p className="text-white/90 text-xl font-medium leading-relaxed">{currentStudent.traits}</p>
-            </div>
-
-
-            <div className="mt-auto">
-              <span className="text-slate-500 text-xs bg-white/5 px-4 py-1 rounded-full italic">再次點擊看照片</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-      {/* Controls */}
-      <div className="w-full max-w-md mt-8 grid grid-cols-3 gap-4 px-2">
-        <button 
-          onClick={prevCard}
-          className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-sm hover:shadow-md hover:bg-slate-50 active:scale-95 transition-all group"
-        >
-          <ChevronLeft className="text-slate-400 group-hover:text-indigo-500 transition-colors" size={24} />
-          <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Prev</span>
-        </button>
-
-
-        <button 
-          onClick={shuffleCards}
-          className="flex flex-col items-center justify-center p-4 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all text-white"
-        >
-          <Shuffle size={24} />
-          <span className="text-[10px] font-bold mt-1 uppercase text-indigo-100">Shuffle</span>
-        </button>
-
-
-        <button 
-          onClick={nextCard}
-          className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-sm hover:shadow-md hover:bg-slate-50 active:scale-95 transition-all group"
-        >
-          <ChevronRight className="text-slate-400 group-hover:text-indigo-500 transition-colors" size={24} />
-          <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Next</span>
-        </button>
-      </div>
-
-
-      <p className="mt-8 text-slate-400 text-[10px] flex items-center gap-2 font-medium">
-        <RotateCcw size={12} /> 郭主任，請先點擊藍色上傳按鈕為三張卡片各選一次照片。
-      </p>
-
-
-      <style dangerouslySetInnerHTML={{ __html: `
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>內埔農工學生記憶訓練 - 郭主任專用</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
         .perspective-1000 { perspective: 1000px; }
         .transform-style-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
-      `}} />
-    </div>
-  );
-};
+    </style>
+</head>
+<body class="bg-slate-100">
+    <div id="root"></div>
 
 
-export default App;
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+        
+        // 模擬 Lucide 圖示元件
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [name]);
+            return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
+        };
+
+
+        const App = () => {
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [isFlipped, setIsFlipped] = useState(false);
+            const [imageMap, setImageMap] = useState({});
+            const fileInputRef = useRef(null);
+
+
+            const [students, setStudents] = useState([
+                { id: '保414022', name: '邱家博', traits: '態度端正、戴眼鏡、短髮', bgColor: 'bg-blue-500' },
+                { id: '保414023', name: '陳奕睿', traits: '活潑開朗、拍照比YA、短髮', bgColor: 'bg-indigo-500' },
+                { id: '保414001', name: '郭紓岑', traits: '笑容燦爛、拍照比YA、長髮綁起', bgColor: 'bg-rose-500' }
+            ]);
+
+
+            const handleImageUpload = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const imageUrl = URL.createObjectURL(file);
+                    setImageMap(prev => ({ ...prev, [students[currentIndex].id]: imageUrl }));
+                }
+            };
+
+
+            const nextCard = () => {
+                setIsFlipped(false);
+                setTimeout(() => setCurrentIndex((prev) => (prev + 1) % students.length), 150);
+            };
+
+
+            const prevCard = () => {
+                setIsFlipped(false);
+                setTimeout(() => setCurrentIndex((prev) => (prev - 1 + students.length) % students.length), 150);
+            };
+
+
+            const shuffleCards = () => {
+                setIsFlipped(false);
+                setTimeout(() => {
+                    const shuffled = [...students].sort(() => Math.random() - 0.5);
+                    setStudents(shuffled);
+                    setCurrentIndex(0);
+                }, 150);
+            };
+
+
+            const currentStudent = students[currentIndex];
+            const currentImage = imageMap[currentStudent.id];
+
+
+            return (
+                <div className="min-h-screen p-4 md:p-8 flex flex-col items-center font-sans text-slate-800">
+                    <div className="w-full max-w-md mb-6 text-center">
+                        <div className="flex items-center justify-center gap-2 mb-1 text-indigo-600">
+                            <Icon name="graduation-cap" size={28} />
+                            <h1 className="text-xl font-bold tracking-tight">學生姓名記憶訓練</h1>
+                        </div>
+                        <p className="text-slate-500 text-xs">內埔農工 · 郭政郎主任專用</p>
+                    </div>
+
+
+                    <div className="w-full max-w-md mb-6 px-2">
+                        <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-widest">
+                            <span>進度記錄</span>
+                            <span>{currentIndex + 1} / {students.length}</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${((currentIndex + 1) / students.length) * 100}%` }} />
+                        </div>
+                    </div>
+
+
+                    <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+
+
+                    <div className="relative w-full max-w-md aspect-[3/4] perspective-1000">
+                        <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`} onClick={(e) => { if (e.target.closest('.upload-btn')) return; setIsFlipped(!isFlipped); }}>
+                            <div className="absolute inset-0 backface-hidden bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border-8 border-white flex flex-col">
+                                <div className="relative flex-grow bg-slate-50 flex items-center justify-center overflow-hidden">
+                                    {currentImage ? <img src={currentImage} className="w-full h-full object-cover" /> : <div className="flex flex-col items-center text-slate-300"><Icon name="user" size={80} /><p className="mt-4 text-sm font-medium">請上傳照片</p></div>}
+                                    <button onClick={() => fileInputRef.current.click()} className="upload-btn absolute bottom-4 right-4 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg z-10"><Icon name="upload" size={20} /></button>
+                                </div>
+                                <div className="py-4 text-center bg-white border-t border-slate-50"><span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">點擊卡片翻轉</span></div>
+                            </div>
+                            <div className="absolute inset-0 backface-hidden bg-slate-900 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center p-8 text-center rotate-y-180 border-8 border-slate-800">
+                                <div className={`w-20 h-20 rounded-2xl ${currentStudent.bgColor} mb-6 flex items-center justify-center shadow-2xl`}><Icon name="check-circle-2" size={40} className="text-white" /></div>
+                                <h2 className="text-4xl font-bold text-white mb-2">{currentStudent.name}</h2>
+                                <p className="text-indigo-400 font-mono text-lg mb-8">{currentStudent.id}</p>
+                                <div className="w-full h-px bg-white/10 mb-8" />
+                                <div className="space-y-3">
+                                    <p className="text-slate-500 text-[10px] uppercase tracking-[0.3em] font-black">Memory Point</p>
+                                    <p className="text-white/90 text-xl font-medium leading-relaxed">{currentStudent.traits}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div className="w-full max-w-md mt-8 grid grid-cols-3 gap-4 px-2">
+                        <button onClick={prevCard} className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-sm hover:bg-slate-50 active:scale-95 transition-all group">
+                            <Icon name="chevron-left" className="text-slate-400 group-hover:text-indigo-500" />
+                            <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Prev</span>
+                        </button>
+                        <button onClick={shuffleCards} className="flex flex-col items-center justify-center p-4 bg-indigo-600 rounded-2xl shadow-lg text-white active:scale-95 transition-all">
+                            <Icon name="shuffle" />
+                            <span className="text-[10px] font-bold mt-1 uppercase">Shuffle</span>
+                        </button>
+                        <button onClick={nextCard} className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-sm hover:bg-slate-50 active:scale-95 transition-all group">
+                            <Icon name="chevron-right" className="text-slate-400 group-hover:text-indigo-500" />
+                            <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Next</span>
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
